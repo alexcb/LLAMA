@@ -155,12 +155,28 @@ function kick(player_sid)
   });
 }
 
+function format_points(points)
+{
+  var s = '';
+  var sum = 0;
+  $.each(points, function(i, v) {
+    if( i > 0 ) {
+      s += ' + ';
+    }
+    s += '' + v;
+    sum += v
+  });
+  s += ' = ' + sum;
+  return s;
+}
+
 function handle_playing_state(state)
 {
   var game_id = window.game_id;
   var div = $('#thegame');
   div.empty();
   var tbl = $('<table>');
+  var is_spectator = (state['you'] == -1);
   tbl.append($('<tr><th>Player</th><th>Number of cards</th><th>Points</th><th>still in?</th><th>last action</th><th>kick</th></tr>'));
   $.each(state['players'], function(i, v) {
     var active = false;
@@ -170,7 +186,9 @@ function handle_playing_state(state)
       last_action = '* current move *';
     }
 
-    tbl.append($('<tr><td>' + v['name'] + '</td><td>' + v['cards'] + '</td><td>' + v['points'] + '</td><td>' + v['still_in'] + '</td><td>' + last_action + '</td><td><a href="#" onclick="kick(\'' + v['session_id'] + '\')">skip</a></tr>'));
+    var points_str = format_points(v['point_history']);
+
+    tbl.append($('<tr><td>' + v['name'] + '</td><td>' + v['cards'] + '</td><td>' + points_str + '</td><td>' + v['still_in'] + '</td><td>' + last_action + '</td><td><a href="#" onclick="kick(\'' + v['session_id'] + '\')">skip</a></tr>'));
   });
   div.append(tbl);
 
@@ -181,75 +199,79 @@ function handle_playing_state(state)
 
   div.append(tbltop);
 
-  var can_play = false;
-  var cards_div = $('<div>');
-  $.each(state['cards'], function(i, v) {
-    var card = v;
-    var img = $('<img src="/static/img/card_' + v + '.jpg" alt="' + v + '" class="card">');
-    if( state['active'] == true && canplay(v, state['face_card'])) {
-      can_play = true;
-      img.hover(
-        function() {
-          $( this ).addClass( "hover" );
-        }, function() {
-          $( this ).removeClass( "hover" );
-        }
-      );
-      img.click(function(img) {
+  if( !is_spectator ) {
+    var can_play = false;
+    var cards_div = $('<div>');
+    $.each(state['cards'], function(i, v) {
+      var card = v;
+      var img = $('<img src="/static/img/card_' + v + '.jpg" alt="' + v + '" class="card">');
+      if( state['active'] == true && canplay(v, state['face_card'])) {
+        can_play = true;
+        img.hover(
+          function() {
+            $( this ).addClass( "hover" );
+          }, function() {
+            $( this ).removeClass( "hover" );
+          }
+        );
+        img.click(function(img) {
 
-        console.log(card)
-        get_socket().emit('play_card', {'game_id': game_id, 'card': card}, function(error, message){
-          console.log('start game emit callback');
+          console.log(card)
+          get_socket().emit('play_card', {'game_id': game_id, 'card': card}, function(error, message){
+            console.log('start game emit callback');
+            console.log(error);
+            console.log(message);
+          });
+
+        });
+      }
+      cards_div.append(img);
+    });
+
+    console.log('is active?');
+    console.log(state['active']);
+    if( state['active'] == true ) {
+      console.log('i am active!');
+      var p = $('<p>');
+      p.append($('<blink>It\'s your turn!</blink><br>'));
+      if( can_play ) {
+        p.append($('<span>pick a card below</span><i> or </i>'));
+      } else {
+        p.append($('<span>Your hand sucks </span>'));
+      }
+      if( state['can_draw'] ) {
+      var draw_link = $('<a href="#">Draw a new card</a> ');
+      draw_link.click(function(e) {
+
+        get_socket().emit('draw_card', {'game_id': game_id}, function(error, message){
           console.log(error);
           console.log(message);
         });
 
       });
-    }
-    cards_div.append(img);
-  });
+        p.append(draw_link);
+        p.append($('<i> or </i>'));
+      } else {
+        p.append($('<b>no draws allowed since you\'re the last player in the round </b>'));
+      }
 
-  console.log('is active?');
-  console.log(state['active']);
-  if( state['active'] == true ) {
-    console.log('i am active!');
-    var p = $('<p>');
-    p.append($('<blink>It\'s your turn!</blink><br>'));
-    if( can_play ) {
-      p.append($('<span>pick a card below</span><i> or </i>'));
-    } else {
-      p.append($('<span>Your hand sucks </span>'));
-    }
-    if( state['can_draw'] ) {
-    var draw_link = $('<a href="#">Draw a new card</a> ');
-    draw_link.click(function(e) {
+      var pass_link = $('<a href="#">pass and sit out the rest of the round</a>');
+      pass_link.click(function(e) {
 
-      get_socket().emit('draw_card', {'game_id': game_id}, function(error, message){
-        console.log(error);
-        console.log(message);
+        get_socket().emit('pass', {'game_id': game_id}, function(error, message){
+          console.log(error);
+          console.log(message);
+        });
+
       });
+      p.append(pass_link);
 
-    });
-      p.append(draw_link);
-      p.append($('<i> or </i>'));
-    } else {
-      p.append($('<b>no draws allowed since you\'re the last player in the round </b>'));
+      div.append(p)
     }
-
-    var pass_link = $('<a href="#">pass and sit out the rest of the round</a>');
-    pass_link.click(function(e) {
-
-      get_socket().emit('pass', {'game_id': game_id}, function(error, message){
-        console.log(error);
-        console.log(message);
-      });
-
-    });
-    p.append(pass_link);
-
-    div.append(p)
+    div.append(cards_div);
+  } else {
+    div.append($('<b>You are currently spectating</b>'));
   }
-  div.append(cards_div);
 
   var button = $('<input type="submit" value="reset the game">');
   button.click(function(e) {
@@ -319,7 +341,8 @@ function handle_game_end(state)
     if( v == state['you'] ) {
       you = ' (you)';
     }
-    tbl.append($('<tr><td>' + player['name'] + you + '</td><td>' + player['points'] + '</td></tr>'));
+    var points_str = format_points(player['point_history']);
+    tbl.append($('<tr><td>' + player['name'] + you + '</td><td>' + points_str + '</td></tr>'));
   });
   div.append(tbl);
 

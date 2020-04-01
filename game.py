@@ -17,6 +17,7 @@ class player(object):
         self.cards = []
         self.face_card = None
         self.points = 0
+        self.point_history = []
         self.active = True
         self.last_action = ''
 
@@ -36,6 +37,7 @@ def get_card_name(card_num):
 class game(object):
     def __init__(self):
         self.players = []
+        self.spectators = []
         self.state = 'wait'
         self.current_player = None
 
@@ -46,12 +48,12 @@ class game(object):
                 x.sock_id = sock_id
                 x.name = player_name
                 return
+        x = player(session_id, player_name, sock_id)
         if self.state != 'wait':
             print('got a request to join a pre-started game')
-            return
-        x = player(session_id, player_name, sock_id)
-        self.players.append(x)
-        return
+            self.spectators.append(x)
+        else:
+            self.players.append(x)
 
     def draw_card(self):
         return self.draw_cards(1)[0]
@@ -71,8 +73,11 @@ class game(object):
 
     def reset(self):
         self.state = 'wait'
+        self.players.extend(self.spectators)
+        self.spectators = []
         for x in self.players:
             x.points = 0
+            x.point_history = []
         self._setup_round()
 
     def _setup_round(self):
@@ -114,13 +119,14 @@ class game(object):
             points = self.get_points(x.cards)
             if points == 0:
                 if x.points >= 10:
-                    x.points -= 10
+                    points = -10
                 else:
-                    x.points -= 1
-            else:
-                x.points += points
-                if x.points >= 40:
-                    game_end = True
+                    # intentially allow negative points when x.points == 0, for fun!
+                    points = -1
+            x.points += points
+            x.point_history.append(points)
+            if x.points >= 40:
+                game_end = True
 
         if game_end:
             print('end of game')
@@ -220,6 +226,7 @@ class game(object):
                         'name': x.name,
                         'cards': len(x.cards),
                         'points': x.points,
+                        'point_history': x.point_history,
                         'still_in': x.active,
                         'last_action': x.last_action,
                         'session_id': x.session_id,
@@ -237,21 +244,28 @@ class game(object):
                 state['active'] = bool(i == self.current_player)
                 state['cards'] = x.cards
                 state['you'] = i
-                print(state)
-                print(f'sending state to {x.sock_id}')
                 emit('state', state, room=x.sock_id)
+
+            for i, x in enumerate(self.spectators):
+                state = copy.deepcopy(pub_state)
+                state['you'] = -1
+                emit('state', state, room=x.sock_id)
+
             return
 
         if self.state == 'end':
             state = {
                 'state': 'end',
                 'players': [
-                    {'name': x.name, 'points': x.points}
+                    {'name': x.name, 'points': x.points, 'point_history': x.point_history}
                     for x in self.players
                     ],
                 }
             for i, x in enumerate(self.players):
                 state['you'] = i
+                emit('state', state, room=x.sock_id)
+            for i, x in enumerate(self.spectators):
+                state['you'] = -1
                 emit('state', state, room=x.sock_id)
             return
 
@@ -273,7 +287,7 @@ def get_or_create_game(game_id):
         g = games[game_id]
     return g
 
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, send_from_directory
 from flask_socketio import SocketIO, send, emit
 from functools import wraps
 import uuid
@@ -317,7 +331,11 @@ def hello_world(game_id, sid):
 
 @app.route('/static/<path:path>')
 def serve_static_content(path):
-    return flask.send_from_directory('static', path)
+    return send_from_directory('static', path)
+
+@app.route('/favicon.ico')
+def serve_favicon():
+    return send_from_directory('static', 'img/cake.png')
 
 @socketio.on('connect')
 def handle_connect():
