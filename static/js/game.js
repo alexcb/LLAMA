@@ -214,7 +214,7 @@ function handle_playing_state(state)
   if( state['active'] == true ) {
     console.log('i am active!');
     var p = $('<p>');
-    p.append($('<b>It\'s your turn!</b><br>'));
+    p.append($('<blink>It\'s your turn!</blink><br>'));
     if( can_play ) {
       p.append($('<span>pick a card below</span><i> or </i>'));
     } else {
