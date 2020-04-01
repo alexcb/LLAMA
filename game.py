@@ -21,10 +21,10 @@ class player(object):
         self.active = True
         self.last_action = ''
 
-def get_deck():
+def get_deck(num_cards=56):
     cards = []
-    for i in range(0, 7):
-        for _ in range(8):
+    while len(cards) < num_cards:
+        for i in range(0, 7):
             cards.append(i)
     random.shuffle(cards)
     return cards
@@ -81,7 +81,8 @@ class game(object):
         self._setup_round()
 
     def _setup_round(self):
-        self.deck = get_deck()
+        num_cards = max(56, len(self.players)*10)
+        self.deck = get_deck(num_cards)
         for x in self.players:
             x.cards = self.draw_cards(8)
             x.active = True

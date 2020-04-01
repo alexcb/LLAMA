@@ -239,13 +239,14 @@ function handle_playing_state(state)
       } else {
         p.append($('<span>Your hand sucks </span>'));
       }
-      if( state['can_draw'] ) {
-      var draw_link = $('<a href="#">Draw a new card</a> ');
-      draw_link.click(function(e) {
-
-        get_socket().emit('draw_card', {'game_id': game_id}, function(error, message){
-          console.log(error);
-          console.log(message);
+      if( state['deck_size'] == 0 ) {
+        p.append($('<b>No more cards to draw from</b>'));
+      } else if( state['can_draw'] ) {
+        var draw_link = $('<a href="#">Draw a new card</a> ');
+        draw_link.click(function(e) {
+          get_socket().emit('draw_card', {'game_id': game_id}, function(error, message){
+            console.log(error);
+            console.log(message);
         });
 
       });
