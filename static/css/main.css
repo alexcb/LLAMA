@@ -7,6 +7,7 @@ table {
   width: 100%;
   text-align: left;
   border-collapse: collapse;
+  margin-bottom: 20px;
 }
 table td, table th {
   border: 1px solid #000000;
@@ -51,10 +52,12 @@ img.hover {
 div.tabletop {
   background-image:url('/static/img/table_top.jpg');
   background-size:100% 100%;
-  width: 300px;
-  height: 300px;
+  width: 250px;
+  height: 250px;
   text-align: center;
   padding: 50px;
+  float: left;
+  margin-right: 20px;
 }
 
 p.deck_size {

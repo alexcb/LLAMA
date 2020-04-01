@@ -44,7 +44,11 @@ function game_setup(game_id, nickname) {
   display_name_prompt(game_id, nickname);
   window.sounds = {
     'llama': new sound('/static/mp3/llama.mp3'),
-    'knock': new sound('/static/mp3/knock.mp3')
+    'bip': new sound('/static/mp3/bip.mp3'),
+    'knock': new sound('/static/mp3/knock.mp3'),
+    'pass': new sound('/static/mp3/pass.mp3'),
+    'endround': new sound('/static/mp3/end-of-round.mp3'),
+    'endgame': new sound('/static/mp3/end-of-game.mp3')
   };
 }
 
@@ -202,8 +206,6 @@ function handle_playing_state(state)
     }
     cards_div.append(img);
   });
-  div.append($('<h3>Your cards:</h3>'));
-  div.append(cards_div);
 
   console.log('is active?');
   console.log(state['active']);
@@ -212,7 +214,7 @@ function handle_playing_state(state)
     var p = $('<p>');
     p.append($('<b>It\'s your turn!</b><br>'));
     if( can_play ) {
-      p.append($('<span>pick a card above</span><i> or </i>'));
+      p.append($('<span>pick a card below</span><i> or </i>'));
     } else {
       p.append($('<span>Your hand sucks </span>'));
     }
@@ -242,9 +244,10 @@ function handle_playing_state(state)
 
     });
     p.append(pass_link);
-    
+
     div.append(p)
   }
+  div.append(cards_div);
 
   var button = $('<input type="submit" value="reset the game">');
   button.click(function(e) {
@@ -258,8 +261,14 @@ function handle_playing_state(state)
   });
   div.append(button);
 
-  if( state['play_llama'] ) {
+  if( state['sound'] == 'llama' ) {
     window.sounds.llama.play();
+  } else if( state['sound'] == 'end-of-round' ) {
+    window.sounds.endround.play();
+  } else if( state['sound'] == 'pass' ) {
+    window.sounds.pass.play();
+  } else if( state['sound'] == 'bip' ) {
+    window.sounds.bip.play();
   }
 
 }
@@ -281,9 +290,11 @@ function handle_game_end(state)
     players.push(i);
   }
 
-  players.sort(function(x, y) {
+  players = players.sort(function(x, y) {
     xp = state['players'][x]['points'];
-    yp = state['players'][x]['points'];
+    yp = state['players'][y]['points'];
+    console.log(xp);
+    console.log(yp);
     if (xp < yp) {
       return -1;
     }
@@ -292,6 +303,7 @@ function handle_game_end(state)
     }
     return 0;
   });
+  console.log(players);
 
   div.append($('<p>' + state['players'][players[0]]['name'] + ' is the winner!!!</p>'));
 
@@ -319,5 +331,6 @@ function handle_game_end(state)
   });
   div.append(button);
 
+  window.sounds.endgame.play();
 
 }

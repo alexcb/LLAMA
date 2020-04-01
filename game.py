@@ -84,7 +84,7 @@ class game(object):
         self.current_player = random.randint(0, len(self.players)-1)
         self.face_card = self.draw_card()
         self.can_draw = True
-        self.play_llama = False
+        self.play_sound = ''
 
     def advance_player(self):
         num_active = sum(int(x.active) for x in self.players)
@@ -125,9 +125,11 @@ class game(object):
         if game_end:
             print('end of game')
             self.state = 'end'
+            self.play_sound = 'end-of-game'
         else:
             print('end of round')
             self._setup_round()
+            self.play_sound = 'end-of-round'
 
 
     def _get_player(self, session_id):
@@ -143,7 +145,7 @@ class game(object):
             return
         player.cards.append(self.draw_card())
         player.last_action = 'drew a card';
-        self.play_llama = False
+        self.play_sound = ''
         self.advance_player()
 
     def _can_play(self, card):
@@ -164,7 +166,10 @@ class game(object):
             return
         self.face_card = card
         player.last_action = 'played a ' + get_card_name(card)
-        self.play_llama = (card == 6)
+        if card == 6:
+            self.play_sound = 'llama'
+        else:
+            self.play_sound = 'bip'
         self.advance_player()
 
     def handle_pass(self, session_id):
@@ -174,7 +179,7 @@ class game(object):
             return
         player.active = False;
         player.last_action = 'passed'
-        self.play_llama = False
+        self.play_sound = 'pass'
         self.advance_player()
 
     def kick_user(self, session_id):
@@ -225,7 +230,7 @@ class game(object):
                 'face_card': self.face_card,
                 'deck_size': len(self.deck),
                 'can_draw': self.can_draw,
-                'play_llama': self.play_llama,
+                'sound': self.play_sound,
                 }
             for i, x in enumerate(self.players):
                 state = copy.deepcopy(pub_state)
