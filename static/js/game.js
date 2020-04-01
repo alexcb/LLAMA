@@ -19,19 +19,20 @@ function get_socket() {
 }
 
 function sound(src) {
-    this.sound = document.createElement("audio");
-    this.sound.src = src;
-    this.sound.setAttribute("preload", "auto");
-    this.sound.setAttribute("controls", "none");
-    this.sound.setAttribute('crossorigin', 'anonymous');
-    this.sound.style.display = "none";
-    document.body.appendChild(this.sound);
-    this.play = function(){
-        this.sound.play();
-    }
-    this.stop = function(){
-        this.sound.pause();
-    }
+    var sound = document.createElement("audio");
+    sound.src = src;
+    sound.setAttribute("preload", "auto");
+    sound.setAttribute("controls", "none");
+    sound.setAttribute('crossorigin', 'anonymous');
+    sound.style.display = "none";
+    document.body.appendChild(sound);
+    //sound.play = function(){
+    //    this.sound.play();
+    //}
+    //sound.stop = function(){
+    //    this.sound.pause();
+    //}
+  return sound;
 }
 
 function get_llama_name() {
