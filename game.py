@@ -436,9 +436,20 @@ def handle_start_game(e):
     g.reset();
     g.send_state()
 
+def get_host():
+    import netifaces
+    for interface in ('eth0','wlp2s0'):
+        try:
+            return netifaces.ifaddresses(interface)[netifaces.AF_INET][0]['addr']
+        except:
+            pass
+    return '127.0.0.1'
+
 if __name__ == '__main__':
-    host = '192.168.0.101'
-    socketio.run(app, debug=True, host=host, port=5001)
+    host = get_host()
+    print(host)
+    debug = host.startswith('192.')
+    socketio.run(app, debug=debug, host=host, port=5001)
 
 #g = game()
 #g.join('alex')
