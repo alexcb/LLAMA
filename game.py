@@ -469,13 +469,3 @@ if __name__ == '__main__':
     debug = host.startswith('192.')
     socketio.run(app, debug=debug, host=host, port=5001)
 
-#g = game()
-#g.join('alex')
-#g.join('lindsay')
-#g.start()
-#
-#
-#while 1:
-#    state = g.get_state()
-#    print(state)
-#    break
