@@ -81,10 +81,10 @@ class game(object):
         self._setup_round()
 
     def _setup_round(self):
-        num_cards = max(56, len(self.players)*10)
+        num_cards = max(56, len(self.players)*8)
         self.deck = get_deck(num_cards)
         for x in self.players:
-            x.cards = self.draw_cards(8)
+            x.cards = self.draw_cards(6)
             x.active = True
             x.last_action = ''
         self.current_player = random.randint(0, len(self.players)-1)
