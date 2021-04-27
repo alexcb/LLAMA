@@ -457,7 +457,7 @@ def handle_start_game(e):
 
 def get_host():
     import netifaces
-    for interface in ('eth0','wlp2s0'):
+    for interface in ('eth0','wlp2s0','enp41s0'):
         try:
             return netifaces.ifaddresses(interface)[netifaces.AF_INET][0]['addr']
         except:
