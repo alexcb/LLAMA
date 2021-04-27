@@ -1,6 +1,9 @@
 # LLAMA
 L.L.A.M.A.
 
+![screenshot](llama-screenshot.png)
+
+
 ## Running
 
 step 1: install [earthly](https://earthly.dev/get-earthly)
